@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kushl Bot</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="icon" href="/static/1st.png" />
+</head>
+<body>
+  <div id="chat-widget">
+    <header>
+      <div class="bot-info">
+        <img src="/static/pp.png" alt="bot" class="bot-avatar"/>
+        <div class="bot-details">
+          <h2>Kushl's Bot</h2>
+          <p class="status">online...</p>
+        </div>
+      </div>
+      <div class="bot-actions">
+        <button id="clear-history" title="Clear History">🔄</button>
+        <!-- <button id="toggle-theme" title="Toggle Theme">☀︎</button> -->
+      </div>
+    </header>
+
+    <div id="chat-area"></div>
+
+    <footer>
+      <!-- <button id="emoji-btn">😊</button> -->
+      <input type="text" id="message" placeholder="Enter message" />
+      <button id="mic-btn" title="Speak"><img src="/static/mic.png" alt="mic" /></button>
+      <button id="send-btn" title="Send"><img src="/static/paper-plane.png" alt="send" /></button>
+    </footer>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
+
