@@ -143,3 +143,11 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
 function scrollToBottom() {
   chatArea.scrollTop = chatArea.scrollHeight;
 }
+
+// scroll chat to bottom when keyboard opens
+document.getElementById("message").addEventListener("focus", () => {
+  setTimeout(() => {
+    document.getElementById("chat-area").scrollTop = document.getElementById("chat-area").scrollHeight;
+  }, 300);
+});
+
