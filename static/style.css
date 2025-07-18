@@ -171,6 +171,11 @@ footer button:hover {
 #chat-area::-webkit-scrollbar {
   width: 6px;
 }
+#chat-area {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* for smooth scrolling on mobile */
+}
 #chat-area::-webkit-scrollbar-track {
   background: transparent;
 }
