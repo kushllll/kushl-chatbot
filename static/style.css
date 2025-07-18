@@ -7,34 +7,31 @@
 body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
-  padding:0;
-  background: #DFB6B2;
-  /* background: #190019; */
+  /* background: #DFB6B2; */
+  background: #190019;
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
-  box-sizing: border-box;
 }
 
 #chat-widget {
   background: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(12px);
-  border-radius: 0px;
+  border-radius: 20px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   width: 100%;
-  max-width: auto;
-  height: 100vh;
+  max-width: 420px;
+  height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 header {
-  background: linear-gradient(to right, #000000, #31036d);
+  background: linear-gradient(to right, #e100ff,#2B124C );
   padding: 1rem;
-  color:rgb(251 228 216);
+  color: #2B124C;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -47,18 +44,10 @@ header {
 }
 
 .bot-avatar {
-  /* width: 36px;
+  width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 2px solid white; */
-    border: 2px solid #cddc39;
-  padding: 2px;
-  border-radius: 50%;
-  border-top-color: #2231ff;
-  border-left-color: #ded0d0;
-  border-right-color: #dc1e1e;
-  /* width: 75px; */
-  height: 50px;
+  border: 2px solid white;
 }
 
 .bot-details h2 {
@@ -69,38 +58,17 @@ header {
 .status {
   font-size: 0.75rem;
   opacity: 0.85;
-  margin-top: 5px; 
-  /* margin-bottom: auto;  */
-}
-  
 }
 
-/* .bot-actions button {
+.bot-actions button {
   background: transparent;
   border: none;
   color: white;
   font-size: 1.2rem;
   cursor: pointer;
-  /* margin-left: 10px; */
+  margin-left: 10px;
   transition: transform 0.2s;
-} */
-
-.bot-actions button{
-   /* width: 100px;
-  height: 100px;  */
-   /* border-radius: 50%; */
-  /* border: 2px solid white;
-  width: 36px;
-  height: 36px;3 */
-   border: 3px solid #cddc39;
-  padding: 2px;
-  border-radius: 50%;
-  border-top-color: #2231ff;
-  border-left-color: #ded0d0;
-  border-right-color: #dc1e1e;
-  width: 75px;
-  height: 75px;
-} 
+}
 
 .bot-actions button:hover {
   transform: scale(1.2);
@@ -171,9 +139,8 @@ footer {
   display: flex;
   align-items: center;
   gap: 8px;
-  /* padding: 0.5rem; */
+  padding: 0.75rem;
   border-top: 1px solid #ccc;
-  margin-bottom: 10px;
   background-color:linear-gradient(to right, #e100ff,#2B124C );
 }
 
@@ -209,4 +176,3 @@ footer button:hover {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 3px;
 }
-
