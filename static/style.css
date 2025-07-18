@@ -51,14 +51,14 @@ header {
   height: 36px;
   border-radius: 50%;
   border: 2px solid white; */
-    border: 4px solid #cddc39;
+    border: 2px solid #cddc39;
   padding: 2px;
   border-radius: 50%;
   border-top-color: #2231ff;
   border-left-color: #ded0d0;
   border-right-color: #dc1e1e;
-  width: 75px;
-  height: 75px;
+  /* width: 75px; */
+  height: 50px;
 }
 
 .bot-details h2 {
@@ -75,7 +75,7 @@ header {
   
 }
 
-.bot-actions button {
+/* .bot-actions button {
   background: transparent;
   border: none;
   color: white;
@@ -83,7 +83,7 @@ header {
   cursor: pointer;
   /* margin-left: 10px; */
   transition: transform 0.2s;
-}
+} */
 
 .bot-actions button{
    /* width: 100px;
