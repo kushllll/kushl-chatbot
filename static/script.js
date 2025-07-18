@@ -2,10 +2,8 @@ const chatArea = document.getElementById("chat-area");
 const messageInput = document.getElementById("message");
 const sendBtn = document.getElementById("send-btn");
 const micBtn = document.getElementById("mic-btn");
-const themeBtn = document.getElementById("toggle-theme");
 const clearBtn = document.getElementById("clear-history");
 
-let isDark = false;
 let recognition;
 let isRecording = false;
 
@@ -89,12 +87,6 @@ sendBtn.onclick = async () => {
   }
 };
 
-// -------------------- Theme Toggle --------------------
-themeBtn.onclick = () => {
-  document.body.classList.toggle("dark-mode");
-  isDark = !isDark;
-};
-
 // -------------------- Clear History --------------------
 clearBtn.onclick = () => {
   localStorage.removeItem("chat-history");
@@ -107,7 +99,7 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SpeechRecognition();
-  recognition.interimResults = true;
+  recognition.interimResults = false;
   recognition.lang = "en-US";
 
   recognition.onstart = () => {
@@ -116,44 +108,38 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   };
 
   recognition.onresult = (event) => {
-    const transcript = Array.from(event.results)
-      .map((res) => res[0].transcript)
-      .join("");
-
+    const transcript = event.results[0][0].transcript;
     messageInput.value = transcript;
-
-    if (event.results[0].isFinal) {
-      recognition.stop();
-      micBtn.classList.remove("recording");
-      sendBtn.click();
-    }
+    recognition.stop();
+    micBtn.classList.remove("recording");
+    sendBtn.click();
   };
 
   recognition.onerror = (e) => {
     console.error("Mic error", e);
     micBtn.classList.remove("recording");
+    messageInput.placeholder = "Enter message...";
   };
 
   recognition.onend = () => {
     micBtn.classList.remove("recording");
+    isRecording = false;
     messageInput.placeholder = "Enter message...";
   };
 
   micBtn.onclick = () => {
-    if (isRecording) {
-      recognition.stop();
-      isRecording = false;
-    } else {
+    if (!isRecording) {
       recognition.start();
       isRecording = true;
+    } else {
+      recognition.stop();
     }
   };
 } else {
   micBtn.style.display = "none";
 }
 
-// -------------------- Auto Scroll --------------------
+// -------------------- Scroll --------------------
 function scrollToBottom() {
   chatArea.scrollTop = chatArea.scrollHeight;
 }
-

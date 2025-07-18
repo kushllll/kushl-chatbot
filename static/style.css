@@ -7,12 +7,15 @@
 body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
+  padding:0;
   /* background: #DFB6B2; */
   background: #190019;
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 #chat-widget {
@@ -22,7 +25,7 @@ body {
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   width: 100%;
   max-width: 420px;
-  height: 90vh;
+  height: 95vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
