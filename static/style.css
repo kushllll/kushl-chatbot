@@ -8,11 +8,13 @@ body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
   /* background: #DFB6B2; */
-  background: #190019;
+  background:#DFB6B2;
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 #chat-widget {
@@ -21,7 +23,7 @@ body {
   border-radius: 20px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   width: 100%;
-  max-width: 420px;
+  max-width: auto;
   height: 90vh;
   display: flex;
   flex-direction: column;
@@ -29,9 +31,9 @@ body {
 }
 
 header {
-  background: linear-gradient(to right, #e100ff,#2B124C );
+  background: linear-gradient(to right, #000000, #31036d );
   padding: 1rem;
-  color: #2B124C;
+  color: rgb(251 228 216);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -44,10 +46,22 @@ header {
 }
 
 .bot-avatar {
-  width: 36px;
+  /* width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 2px solid white;
+  border: 2px solid white; */
+    /* width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid white; */
+    border: 2px solid #cddc39;
+  padding: 2px;
+  border-radius: 50%;
+  border-top-color: #2231ff;
+  border-left-color: #ded0d0;
+  border-right-color: #dc1e1e;
+  /* width: 75px; */
+  height: 50px;
 }
 
 .bot-details h2 {
@@ -58,6 +72,7 @@ header {
 .status {
   font-size: 0.75rem;
   opacity: 0.85;
+   margin-top: 5px;
 }
 
 .bot-actions button {
