@@ -10,7 +10,7 @@ body {
   padding:0;
   background: #DFB6B2;
   /* background: #190019; */
-  /* height: 100vh; */
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -21,10 +21,10 @@ body {
 #chat-widget {
   background: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(12px);
-  border-radius: 8px;
+  border-radius: 0px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   width: 100%;
-  max-width: 420px;
+  /* max-width: 420px; */
   height: 100vh;
   display: flex;
   flex-direction: column;
