@@ -442,6 +442,76 @@
             cursor: not-allowed;
         }
 
+        /* Professional Privacy Notice */
+        .privacy-notice {
+            padding: 8px 20px 12px;
+            background: transparent;
+        }
+
+        .privacy-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .privacy-icon {
+            font-size: 0.8rem;
+            color: rgba(76, 175, 80, 0.8);
+            flex-shrink: 0;
+        }
+
+        .privacy-text {
+            max-width: 100%;
+        }
+
+        .privacy-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid transparent;
+        }
+
+        .privacy-link:hover {
+            color: #4CAF50;
+            border-bottom-color: #4CAF50;
+        }
+
+        /* Mobile privacy notice styling */
+        @media (max-width: 768px) {
+            .privacy-notice {
+                padding: 6px 15px 8px;
+            }
+
+            .privacy-content {
+                font-size: 0.7rem;
+                gap: 6px;
+            }
+
+            .privacy-icon {
+                font-size: 0.75rem;
+            }
+
+            .privacy-text {
+                line-height: 1.3;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .privacy-content {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .privacy-text {
+                font-size: 0.65rem;
+            }
+        }
+
         /* Typing indicator */
         .typing-indicator {
             display: flex;
@@ -969,6 +1039,18 @@
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
+                
+                <!-- Professional Privacy Notice -->
+                <div class="privacy-notice">
+                    <div class="privacy-content">
+                        <i class="fas fa-shield-alt privacy-icon"></i>
+                        <span class="privacy-text">
+                            Your conversations are secured and encrypted. We use cookies to enhance your experience. 
+                            <a href="#" class="privacy-link" onclick="showPrivacyModal()">Privacy Policy</a> • 
+                            <a href="#" class="privacy-link" onclick="showTermsModal()">Terms</a>
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -981,6 +1063,52 @@
             <div class="modal-buttons">
                 <button class="modal-btn cancel" id="cancelClearBtn">Cancel</button>
                 <button class="modal-btn confirm" id="confirmClearBtn">Clear All</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div class="modal" id="privacyModal">
+        <div class="modal-content" style="max-width: 500px; max-height: 70vh; overflow-y: auto;">
+            <h3><i class="fas fa-shield-alt"></i> Privacy Policy</h3>
+            <div style="text-align: left; color: #555; line-height: 1.6;">
+                <p><strong>Data Collection:</strong> We collect minimal data to provide our AI chat service. This includes your messages and basic usage analytics.</p>
+                
+                <p><strong>Cookies:</strong> We use essential cookies to maintain your session and improve your experience. No tracking cookies are used.</p>
+                
+                <p><strong>Data Security:</strong> All conversations are encrypted and securely stored. We do not share your data with third parties.</p>
+                
+                <p><strong>Data Retention:</strong> Chat history is stored locally in your browser and on our secure servers to maintain conversation continuity.</p>
+                
+                <p><strong>Your Rights:</strong> You can delete your chat history at any time using the "Clear All History" option.</p>
+                
+                <p style="font-size: 0.9em; color: #777; margin-top: 20px;">Last updated: January 2024</p>
+            </div>
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="modal-btn cancel" onclick="hidePrivacyModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div class="modal" id="termsModal">
+        <div class="modal-content" style="max-width: 500px; max-height: 70vh; overflow-y: auto;">
+            <h3><i class="fas fa-file-contract"></i> Terms of Service</h3>
+            <div style="text-align: left; color: #555; line-height: 1.6;">
+                <p><strong>Service Usage:</strong> KushlBot is provided for personal and educational use. Commercial usage requires prior permission.</p>
+                
+                <p><strong>Content Policy:</strong> Users must not submit harmful, illegal, or inappropriate content. We reserve the right to moderate conversations.</p>
+                
+                <p><strong>AI Limitations:</strong> While we strive for accuracy, AI responses may contain errors. Users should verify important information independently.</p>
+                
+                <p><strong>Availability:</strong> We aim for 99% uptime but cannot guarantee uninterrupted service. Maintenance windows will be announced when possible.</p>
+                
+                <p><strong>Account Termination:</strong> We may terminate access for violations of these terms or misuse of the service.</p>
+                
+                <p style="font-size: 0.9em; color: #777; margin-top: 20px;">By using KushlBot, you agree to these terms. Last updated: January 2024</p>
+            </div>
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="modal-btn cancel" onclick="hideTermsModal()">Close</button>
             </div>
         </div>
     </div>
@@ -1551,6 +1679,30 @@
                 }, 500);
             });
         }
+
+        // Privacy and Terms Modal Functions
+        function showPrivacyModal() {
+            document.getElementById('privacyModal').style.display = 'flex';
+        }
+
+        function hidePrivacyModal() {
+            document.getElementById('privacyModal').style.display = 'none';
+        }
+
+        function showTermsModal() {
+            document.getElementById('termsModal').style.display = 'flex';
+        }
+
+        function hideTermsModal() {
+            document.getElementById('termsModal').style.display = 'none';
+        }
+
+        // Close modals when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
         
         document.addEventListener('DOMContentLoaded', () => {
             chatDashboard = new ChatDashboard();
