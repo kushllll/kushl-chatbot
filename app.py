@@ -12,35 +12,51 @@ app.secret_key = os.getenv("SECRET_KEY", "your-secret-key-change-this")
 OPENROUTER_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# Initialize database
+# Initialize database with better error handling
 def init_db():
-    conn = sqlite3.connect('chat_history.db')
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS chat_sessions (
-            id TEXT PRIMARY KEY,
-            session_id TEXT NOT NULL,
-            title TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS chat_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id TEXT NOT NULL,
-            chat_id TEXT NOT NULL,
-            role TEXT NOT NULL,
-            content TEXT NOT NULL,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (chat_id) REFERENCES chat_sessions (id)
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
+    try:
+        # Use absolute path for database
+        db_path = os.path.join(os.getcwd(), 'chat_history.db')
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS chat_sessions (
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                title TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT NOT NULL,
+                chat_id TEXT NOT NULL,
+                role TEXT NOT NULL,
+                content TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (chat_id) REFERENCES chat_sessions (id)
+            )
+        ''')
+        
+        conn.commit()
+        conn.close()
+        print("Database initialized successfully!")
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+
+# Database connection helper
+def get_db_connection():
+    try:
+        db_path = os.path.join(os.getcwd(), 'chat_history.db')
+        conn = sqlite3.connect(db_path)
+        return conn
+    except Exception as e:
+        print(f"Database connection error: {e}")
+        return None
 
 init_db()
 
@@ -59,21 +75,29 @@ def dashboard():
 
 @app.route('/api/chat/new', methods=['POST'])
 def new_chat():
-    session_id = get_session_id()
-    chat_id = str(uuid.uuid4())
-    
-    conn = sqlite3.connect('chat_history.db')
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        INSERT INTO chat_sessions (id, session_id, title, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (chat_id, session_id, "New Chat", datetime.now(), datetime.now()))
-    
-    conn.commit()
-    conn.close()
-    
-    return jsonify({"chat_id": chat_id, "success": True})
+    try:
+        session_id = get_session_id()
+        chat_id = str(uuid.uuid4())
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO chat_sessions (id, session_id, title, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (chat_id, session_id, "New Chat", datetime.now(), datetime.now()))
+        
+        conn.commit()
+        conn.close()
+        
+        print(f"New chat created: {chat_id}")
+        return jsonify({"chat_id": chat_id, "success": True})
+    except Exception as e:
+        print(f"Error creating new chat: {e}")
+        return jsonify({"error": "Failed to create new chat"}), 500
 
 @app.route('/api/chat/history')
 def get_chat_history():
