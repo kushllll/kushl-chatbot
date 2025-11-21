@@ -1,4 +1,3 @@
-# Alternative version using Anthropic API directly
 from flask import Flask, request, jsonify, render_template, session
 import os
 import requests
@@ -6,15 +5,15 @@ import json
 import uuid
 from datetime import datetime
 import sqlite3
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "your-secret-key-change-this")
 
-# Anthropic Direct API Configuration
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")  # New environment variable
-ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
+OPENROUTER_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# Initialize database (same as before)
+# Initialize database
 def init_db():
     conn = sqlite3.connect('chat_history.db')
     cursor = conn.cursor()
@@ -44,9 +43,14 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Initialize database on startup
 init_db()
 
-# All your existing routes (home, dashboard, new_chat, etc.) stay the same...
+def get_session_id():
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid4())
+    return session['session_id']
+
 @app.route('/')
 def home():
     return render_template("index.html")
@@ -54,11 +58,6 @@ def home():
 @app.route('/dashboard')
 def dashboard():
     return render_template("dashboard.html")
-
-def get_session_id():
-    if 'session_id' not in session:
-        session['session_id'] = str(uuid.uuid4())
-    return session['session_id']
 
 @app.route('/api/chat/new', methods=['POST'])
 def new_chat():
@@ -78,7 +77,72 @@ def new_chat():
     
     return jsonify({"chat_id": chat_id, "success": True})
 
-# Modified chat function for direct Anthropic API
+@app.route('/api/chat/history')
+def get_chat_history():
+    session_id = get_session_id()
+    
+    conn = sqlite3.connect('chat_history.db')
+    cursor = conn.cursor()
+    
+    # Get all chats for this session
+    cursor.execute('''
+        SELECT id, title, created_at, updated_at
+        FROM chat_sessions 
+        WHERE session_id = ? 
+        ORDER BY updated_at DESC
+    ''', (session_id,))
+    
+    chats = []
+    for row in cursor.fetchall():
+        chat_id, title, created_at, updated_at = row
+        
+        # Get message count for this chat
+        cursor.execute('SELECT COUNT(*) FROM chat_messages WHERE chat_id = ?', (chat_id,))
+        message_count = cursor.fetchone()[0]
+        
+        chats.append({
+            "id": chat_id,
+            "title": title,
+            "created_at": created_at,
+            "updated_at": updated_at,
+            "message_count": message_count
+        })
+    
+    conn.close()
+    return jsonify({"chats": chats})
+
+@app.route('/api/chat/<chat_id>/messages')
+def get_chat_messages(chat_id):
+    session_id = get_session_id()
+    
+    conn = sqlite3.connect('chat_history.db')
+    cursor = conn.cursor()
+    
+    # Verify chat belongs to this session
+    cursor.execute('SELECT id FROM chat_sessions WHERE id = ? AND session_id = ?', (chat_id, session_id))
+    if not cursor.fetchone():
+        return jsonify({"error": "Chat not found"}), 404
+    
+    # Get messages
+    cursor.execute('''
+        SELECT role, content, timestamp 
+        FROM chat_messages 
+        WHERE chat_id = ? 
+        ORDER BY timestamp ASC
+    ''', (chat_id,))
+    
+    messages = []
+    for row in cursor.fetchall():
+        role, content, timestamp = row
+        messages.append({
+            "role": role,
+            "content": content,
+            "timestamp": timestamp
+        })
+    
+    conn.close()
+    return jsonify({"messages": messages})
+
 @app.route('/api/chat/<chat_id>', methods=['POST'])
 def chat_with_bot(chat_id):
     session_id = get_session_id()
@@ -114,34 +178,28 @@ def chat_with_bot(chat_id):
     for row in reversed(cursor.fetchall()):
         role, content = row
         messages.append({"role": role, "content": content})
+    
+    # Add current message
+    messages.append({"role": "user", "content": user_input})
 
-    # Anthropic API call
     headers = {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "Content-Type": "application/json",
-        "anthropic-version": "2023-06-01"
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
     }
 
-    # Format messages for Anthropic API
-    anthropic_messages = []
-    for msg in messages:
-        if msg["role"] == "user":
-            anthropic_messages.append({"role": "user", "content": msg["content"]})
-        elif msg["role"] == "assistant":
-            anthropic_messages.append({"role": "assistant", "content": msg["content"]})
-
     data = {
-        "model": "claude-3-haiku-20240307",  # Claude 3 Haiku model
-        "max_tokens": 2000,
-        "messages": anthropic_messages
+        "model": "mistralai/mistral-7b-instruct",
+        "messages": messages,
+        "max_tokens": 1000,
+        "temperature": 0.7
     }
 
     try:
-        res = requests.post(ANTHROPIC_URL, headers=headers, json=data, timeout=30)
+        res = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=30)
         result = res.json()
 
         if res.status_code == 200:
-            bot_response = result['content'][0]['text']
+            bot_response = result['choices'][0]['message']['content']
             
             # Save bot response
             cursor.execute('''
@@ -154,6 +212,7 @@ def chat_with_bot(chat_id):
             user_message_count = cursor.fetchone()[0]
             
             if user_message_count == 1:
+                # Generate title from first message (first 50 chars)
                 title = user_input[:50] + "..." if len(user_input) > 50 else user_input
                 cursor.execute('''
                     UPDATE chat_sessions 
@@ -170,7 +229,7 @@ def chat_with_bot(chat_id):
             })
         else:
             conn.close()
-            return jsonify({"error": result.get("error", "Error from Anthropic")}), 500
+            return jsonify({"error": result.get("error", "Error from OpenRouter")}), 500
             
     except requests.exceptions.Timeout:
         conn.close()
@@ -179,15 +238,52 @@ def chat_with_bot(chat_id):
         conn.close()
         return jsonify({"error": str(e)}), 500
 
-# Add all your other existing routes here...
+@app.route('/api/chat/<chat_id>', methods=['DELETE'])
+def delete_chat(chat_id):
+    session_id = get_session_id()
+    
+    conn = sqlite3.connect('chat_history.db')
+    cursor = conn.cursor()
+    
+    # Verify chat belongs to this session
+    cursor.execute('SELECT id FROM chat_sessions WHERE id = ? AND session_id = ?', (chat_id, session_id))
+    if not cursor.fetchone():
+        return jsonify({"error": "Chat not found"}), 404
+    
+    # Delete messages and chat
+    cursor.execute('DELETE FROM chat_messages WHERE chat_id = ?', (chat_id,))
+    cursor.execute('DELETE FROM chat_sessions WHERE id = ?', (chat_id,))
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"success": True})
+
+@app.route('/api/chat/clear-all', methods=['POST'])
+def clear_all_chats():
+    session_id = get_session_id()
+    
+    conn = sqlite3.connect('chat_history.db')
+    cursor = conn.cursor()
+    
+    # Get all chat IDs for this session
+    cursor.execute('SELECT id FROM chat_sessions WHERE session_id = ?', (session_id,))
+    chat_ids = [row[0] for row in cursor.fetchall()]
+    
+    # Delete all messages and chats for this session
+    for chat_id in chat_ids:
+        cursor.execute('DELETE FROM chat_messages WHERE chat_id = ?', (chat_id,))
+    
+    cursor.execute('DELETE FROM chat_sessions WHERE session_id = ?', (session_id,))
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"success": True})
+
 @app.route('/api/health')
 def health_check():
-    return jsonify({
-        "status": "healthy", 
-        "timestamp": datetime.now().isoformat(),
-        "ai_provider": "anthropic_direct",
-        "model": "claude-3-haiku-20240307"
-    })
+    return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
 
 if __name__ == "__main__":
     app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
