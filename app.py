@@ -178,7 +178,7 @@ def chat_with_bot(chat_id):
     }
 
     data = {
-        "model": "anthropic/claude-3-haiku-20240307",
+        "model": "openai/gpt-3.5-turbo-0613",  # Your chosen model - cheap and reliable!
         "messages": messages,
         "max_tokens": 2000,
         "temperature": 0.7
