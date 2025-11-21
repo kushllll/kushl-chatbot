@@ -101,114 +101,133 @@ def new_chat():
 
 @app.route('/api/chat/history')
 def get_chat_history():
-    session_id = get_session_id()
-    
-    conn = sqlite3.connect('chat_history.db')
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        SELECT id, title, created_at, updated_at
-        FROM chat_sessions 
-        WHERE session_id = ? 
-        ORDER BY updated_at DESC
-    ''', (session_id,))
-    
-    chats = []
-    for row in cursor.fetchall():
-        chat_id, title, created_at, updated_at = row
+    try:
+        session_id = get_session_id()
         
-        cursor.execute('SELECT COUNT(*) FROM chat_messages WHERE chat_id = ?', (chat_id,))
-        message_count = cursor.fetchone()[0]
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        cursor = conn.cursor()
         
-        chats.append({
-            "id": chat_id,
-            "title": title,
-            "created_at": created_at,
-            "updated_at": updated_at,
-            "message_count": message_count
-        })
-    
-    conn.close()
-    return jsonify({"chats": chats})
+        cursor.execute('''
+            SELECT id, title, created_at, updated_at
+            FROM chat_sessions 
+            WHERE session_id = ? 
+            ORDER BY updated_at DESC
+        ''', (session_id,))
+        
+        chats = []
+        for row in cursor.fetchall():
+            chat_id, title, created_at, updated_at = row
+            
+            cursor.execute('SELECT COUNT(*) FROM chat_messages WHERE chat_id = ?', (chat_id,))
+            message_count = cursor.fetchone()[0]
+            
+            chats.append({
+                "id": chat_id,
+                "title": title,
+                "created_at": created_at,
+                "updated_at": updated_at,
+                "message_count": message_count
+            })
+        
+        conn.close()
+        return jsonify({"chats": chats})
+    except Exception as e:
+        print(f"Error loading chat history: {e}")
+        return jsonify({"error": "Failed to load chat history"}), 500
 
 @app.route('/api/chat/<chat_id>/messages')
 def get_chat_messages(chat_id):
-    session_id = get_session_id()
-    
-    conn = sqlite3.connect('chat_history.db')
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT id FROM chat_sessions WHERE id = ? AND session_id = ?', (chat_id, session_id))
-    if not cursor.fetchone():
-        return jsonify({"error": "Chat not found"}), 404
-    
-    cursor.execute('''
-        SELECT role, content, timestamp 
-        FROM chat_messages 
-        WHERE chat_id = ? 
-        ORDER BY timestamp ASC
-    ''', (chat_id,))
-    
-    messages = []
-    for row in cursor.fetchall():
-        role, content, timestamp = row
-        messages.append({
-            "role": role,
-            "content": content,
-            "timestamp": timestamp
-        })
-    
-    conn.close()
-    return jsonify({"messages": messages})
+    try:
+        session_id = get_session_id()
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT id FROM chat_sessions WHERE id = ? AND session_id = ?', (chat_id, session_id))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({"error": "Chat not found"}), 404
+        
+        cursor.execute('''
+            SELECT role, content, timestamp 
+            FROM chat_messages 
+            WHERE chat_id = ? 
+            ORDER BY timestamp ASC
+        ''', (chat_id,))
+        
+        messages = []
+        for row in cursor.fetchall():
+            role, content, timestamp = row
+            messages.append({
+                "role": role,
+                "content": content,
+                "timestamp": timestamp
+            })
+        
+        conn.close()
+        return jsonify({"messages": messages})
+    except Exception as e:
+        print(f"Error loading messages: {e}")
+        return jsonify({"error": "Failed to load messages"}), 500
 
 @app.route('/api/chat/<chat_id>', methods=['POST'])
 def chat_with_bot(chat_id):
-    session_id = get_session_id()
-    user_input = request.json.get("message")
-    
-    if not user_input:
-        return jsonify({"error": "No message provided"}), 400
-
-    conn = sqlite3.connect('chat_history.db')
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT id FROM chat_sessions WHERE id = ? AND session_id = ?', (chat_id, session_id))
-    if not cursor.fetchone():
-        return jsonify({"error": "Chat not found"}), 404
-    
-    cursor.execute('''
-        INSERT INTO chat_messages (session_id, chat_id, role, content, timestamp)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (session_id, chat_id, "user", user_input, datetime.now()))
-    
-    cursor.execute('''
-        SELECT role, content 
-        FROM chat_messages 
-        WHERE chat_id = ? 
-        ORDER BY timestamp DESC 
-        LIMIT 10
-    ''', (chat_id,))
-    
-    messages = []
-    for row in reversed(cursor.fetchall()):
-        role, content = row
-        messages.append({"role": role, "content": content})
-    
-    messages.append({"role": "user", "content": user_input})
-
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    data = {
-        "model": "openai/gpt-3.5-turbo-0613",  # Your chosen model - cheap and reliable!
-        "messages": messages,
-        "max_tokens": 2000,
-        "temperature": 0.7
-    }
-
     try:
+        session_id = get_session_id()
+        user_input = request.json.get("message")
+        
+        if not user_input:
+            return jsonify({"error": "No message provided"}), 400
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT id FROM chat_sessions WHERE id = ? AND session_id = ?', (chat_id, session_id))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({"error": "Chat not found"}), 404
+        
+        cursor.execute('''
+            INSERT INTO chat_messages (session_id, chat_id, role, content, timestamp)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (session_id, chat_id, "user", user_input, datetime.now()))
+        
+        cursor.execute('''
+            SELECT role, content 
+            FROM chat_messages 
+            WHERE chat_id = ? 
+            ORDER BY timestamp DESC 
+            LIMIT 10
+        ''', (chat_id,))
+        
+        messages = []
+        for row in reversed(cursor.fetchall()):
+            role, content = row
+            messages.append({"role": role, "content": content})
+        
+        messages.append({"role": "user", "content": user_input})
+
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        data = {
+            "model": "openai/gpt-3.5-turbo-0613",
+            "messages": messages,
+            "max_tokens": 2000,
+            "temperature": 0.7
+        }
+
         res = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=30)
         result = res.json()
 
@@ -243,50 +262,68 @@ def chat_with_bot(chat_id):
             return jsonify({"error": result.get("error", "Error from OpenRouter")}), 500
             
     except requests.exceptions.Timeout:
-        conn.close()
+        if 'conn' in locals():
+            conn.close()
         return jsonify({"error": "Request timeout. Please try again."}), 408
     except Exception as e:
-        conn.close()
+        if 'conn' in locals():
+            conn.close()
+        print(f"Error in chat: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/chat/<chat_id>', methods=['DELETE'])
 def delete_chat(chat_id):
-    session_id = get_session_id()
-    
-    conn = sqlite3.connect('chat_history.db')
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT id FROM chat_sessions WHERE id = ? AND session_id = ?', (chat_id, session_id))
-    if not cursor.fetchone():
-        return jsonify({"error": "Chat not found"}), 404
-    
-    cursor.execute('DELETE FROM chat_messages WHERE chat_id = ?', (chat_id,))
-    cursor.execute('DELETE FROM chat_sessions WHERE id = ?', (chat_id,))
-    
-    conn.commit()
-    conn.close()
-    
-    return jsonify({"success": True})
+    try:
+        session_id = get_session_id()
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT id FROM chat_sessions WHERE id = ? AND session_id = ?', (chat_id, session_id))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({"error": "Chat not found"}), 404
+        
+        cursor.execute('DELETE FROM chat_messages WHERE chat_id = ?', (chat_id,))
+        cursor.execute('DELETE FROM chat_sessions WHERE id = ?', (chat_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error deleting chat: {e}")
+        return jsonify({"error": "Failed to delete chat"}), 500
 
 @app.route('/api/chat/clear-all', methods=['POST'])
 def clear_all_chats():
-    session_id = get_session_id()
-    
-    conn = sqlite3.connect('chat_history.db')
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT id FROM chat_sessions WHERE session_id = ?', (session_id,))
-    chat_ids = [row[0] for row in cursor.fetchall()]
-    
-    for chat_id in chat_ids:
-        cursor.execute('DELETE FROM chat_messages WHERE chat_id = ?', (chat_id,))
-    
-    cursor.execute('DELETE FROM chat_sessions WHERE session_id = ?', (session_id,))
-    
-    conn.commit()
-    conn.close()
-    
-    return jsonify({"success": True})
+    try:
+        session_id = get_session_id()
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT id FROM chat_sessions WHERE session_id = ?', (session_id,))
+        chat_ids = [row[0] for row in cursor.fetchall()]
+        
+        for chat_id in chat_ids:
+            cursor.execute('DELETE FROM chat_messages WHERE chat_id = ?', (chat_id,))
+        
+        cursor.execute('DELETE FROM chat_sessions WHERE session_id = ?', (session_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error clearing chats: {e}")
+        return jsonify({"error": "Failed to clear chats"}), 500
 
 @app.route('/api/health')
 def health_check():
@@ -294,7 +331,7 @@ def health_check():
         "status": "healthy", 
         "timestamp": datetime.now().isoformat(),
         "ai_provider": "openrouter",
-        "model": "claude-3-haiku"
+        "model": "gpt-3.5-turbo-0613"
     })
 
 if __name__ == "__main__":
