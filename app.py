@@ -5,7 +5,6 @@ import json
 import uuid
 from datetime import datetime
 import sqlite3
-from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "your-secret-key-change-this")
@@ -43,7 +42,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Initialize database on startup
 init_db()
 
 def get_session_id():
@@ -84,7 +82,6 @@ def get_chat_history():
     conn = sqlite3.connect('chat_history.db')
     cursor = conn.cursor()
     
-    # Get all chats for this session
     cursor.execute('''
         SELECT id, title, created_at, updated_at
         FROM chat_sessions 
@@ -96,7 +93,6 @@ def get_chat_history():
     for row in cursor.fetchall():
         chat_id, title, created_at, updated_at = row
         
-        # Get message count for this chat
         cursor.execute('SELECT COUNT(*) FROM chat_messages WHERE chat_id = ?', (chat_id,))
         message_count = cursor.fetchone()[0]
         
@@ -118,12 +114,10 @@ def get_chat_messages(chat_id):
     conn = sqlite3.connect('chat_history.db')
     cursor = conn.cursor()
     
-    # Verify chat belongs to this session
     cursor.execute('SELECT id FROM chat_sessions WHERE id = ? AND session_id = ?', (chat_id, session_id))
     if not cursor.fetchone():
         return jsonify({"error": "Chat not found"}), 404
     
-    # Get messages
     cursor.execute('''
         SELECT role, content, timestamp 
         FROM chat_messages 
@@ -154,18 +148,15 @@ def chat_with_bot(chat_id):
     conn = sqlite3.connect('chat_history.db')
     cursor = conn.cursor()
     
-    # Verify chat belongs to this session
     cursor.execute('SELECT id FROM chat_sessions WHERE id = ? AND session_id = ?', (chat_id, session_id))
     if not cursor.fetchone():
         return jsonify({"error": "Chat not found"}), 404
     
-    # Save user message
     cursor.execute('''
         INSERT INTO chat_messages (session_id, chat_id, role, content, timestamp)
         VALUES (?, ?, ?, ?, ?)
     ''', (session_id, chat_id, "user", user_input, datetime.now()))
     
-    # Get chat context (last 10 messages)
     cursor.execute('''
         SELECT role, content 
         FROM chat_messages 
@@ -179,7 +170,6 @@ def chat_with_bot(chat_id):
         role, content = row
         messages.append({"role": role, "content": content})
     
-    # Add current message
     messages.append({"role": "user", "content": user_input})
 
     headers = {
@@ -188,9 +178,9 @@ def chat_with_bot(chat_id):
     }
 
     data = {
-        "model": "mistralai/mistral-7b-instruct",
+        "model": "anthropic/claude-3-haiku-20240307",
         "messages": messages,
-        "max_tokens": 1000,
+        "max_tokens": 2000,
         "temperature": 0.7
     }
 
@@ -201,18 +191,15 @@ def chat_with_bot(chat_id):
         if res.status_code == 200:
             bot_response = result['choices'][0]['message']['content']
             
-            # Save bot response
             cursor.execute('''
                 INSERT INTO chat_messages (session_id, chat_id, role, content, timestamp)
                 VALUES (?, ?, ?, ?, ?)
             ''', (session_id, chat_id, "assistant", bot_response, datetime.now()))
             
-            # Update chat title if it's the first user message
             cursor.execute('SELECT COUNT(*) FROM chat_messages WHERE chat_id = ? AND role = "user"', (chat_id,))
             user_message_count = cursor.fetchone()[0]
             
             if user_message_count == 1:
-                # Generate title from first message (first 50 chars)
                 title = user_input[:50] + "..." if len(user_input) > 50 else user_input
                 cursor.execute('''
                     UPDATE chat_sessions 
@@ -245,12 +232,10 @@ def delete_chat(chat_id):
     conn = sqlite3.connect('chat_history.db')
     cursor = conn.cursor()
     
-    # Verify chat belongs to this session
     cursor.execute('SELECT id FROM chat_sessions WHERE id = ? AND session_id = ?', (chat_id, session_id))
     if not cursor.fetchone():
         return jsonify({"error": "Chat not found"}), 404
     
-    # Delete messages and chat
     cursor.execute('DELETE FROM chat_messages WHERE chat_id = ?', (chat_id,))
     cursor.execute('DELETE FROM chat_sessions WHERE id = ?', (chat_id,))
     
@@ -266,11 +251,9 @@ def clear_all_chats():
     conn = sqlite3.connect('chat_history.db')
     cursor = conn.cursor()
     
-    # Get all chat IDs for this session
     cursor.execute('SELECT id FROM chat_sessions WHERE session_id = ?', (session_id,))
     chat_ids = [row[0] for row in cursor.fetchall()]
     
-    # Delete all messages and chats for this session
     for chat_id in chat_ids:
         cursor.execute('DELETE FROM chat_messages WHERE chat_id = ?', (chat_id,))
     
@@ -283,7 +266,12 @@ def clear_all_chats():
 
 @app.route('/api/health')
 def health_check():
-    return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
+    return jsonify({
+        "status": "healthy", 
+        "timestamp": datetime.now().isoformat(),
+        "ai_provider": "openrouter",
+        "model": "claude-3-haiku"
+    })
 
 if __name__ == "__main__":
     app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
