@@ -302,6 +302,13 @@ header {
     transition: all 0.3s ease;
     font-size: 16px;
     text-decoration: none;
+    line-height: 1;
+}
+
+.header-btn i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .header-btn:hover {
@@ -442,6 +449,15 @@ header {
     align-items: center;
     gap: 8px;
     box-shadow: var(--shadow-sm);
+    line-height: 1;
+}
+
+.suggestion-chip i {
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .suggestion-chip:hover {
@@ -667,6 +683,14 @@ footer {
     transition: all 0.3s ease;
     font-size: 18px;
     flex-shrink: 0;
+    line-height: 1;
+}
+
+.input-btn i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .mic-btn {
