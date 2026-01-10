@@ -8,6 +8,7 @@ class ChatDashboard {
     }
 
     init() {
+        this.loadThemePreference();
         this.setupEventListeners();
         this.setupSpeechRecognition();
         this.loadChatHistory();
@@ -60,6 +61,11 @@ class ChatDashboard {
         // Mobile toggle
         document.getElementById('mobileToggle').addEventListener('click', () => {
             this.toggleSidebar();
+        });
+
+        // Theme toggle
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            this.toggleTheme();
         });
 
         // Close sidebar when clicking outside on mobile
@@ -425,6 +431,32 @@ class ChatDashboard {
     toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         sidebar.classList.toggle('open');
+    }
+
+    loadThemePreference() {
+        const savedTheme = localStorage.getItem('theme');
+        const themeToggle = document.getElementById('theme-toggle');
+        
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        } else {
+            document.body.classList.remove('dark-mode');
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+        }
+    }
+
+    toggleTheme() {
+        const isDarkMode = document.body.classList.toggle('dark-mode');
+        const themeToggle = document.getElementById('theme-toggle');
+        
+        if (isDarkMode) {
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            localStorage.setItem('theme', 'light');
+        }
     }
 
     updateCurrentChatTitle(title) {

@@ -73,6 +73,10 @@ def home():
 def dashboard():
     return render_template("dashboard.html")
 
+@app.route('/mic-test')
+def mic_test():
+    return render_template("mic_test.html")
+
 @app.route('/api/chat/new', methods=['POST'])
 def new_chat():
     try:
@@ -324,6 +328,112 @@ def clear_all_chats():
     except Exception as e:
         print(f"Error clearing chats: {e}")
         return jsonify({"error": "Failed to clear chats"}), 500
+
+@app.route('/chat', methods=['POST'])
+def simple_chat():
+    """Simple chat endpoint for the main interface that stores history"""
+    try:
+        session_id = get_session_id()
+        user_input = request.json.get("message")
+        
+        if not user_input:
+            return jsonify({"error": "No message provided"}), 400
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        cursor = conn.cursor()
+        
+        # Get or create a default chat for simple interface
+        cursor.execute('''
+            SELECT id FROM chat_sessions 
+            WHERE session_id = ? AND title = 'Simple Chat' 
+            ORDER BY updated_at DESC LIMIT 1
+        ''', (session_id,))
+        
+        result = cursor.fetchone()
+        if result:
+            chat_id = result[0]
+        else:
+            # Create new chat session for simple interface
+            chat_id = str(uuid.uuid4())
+            cursor.execute('''
+                INSERT INTO chat_sessions (id, session_id, title, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (chat_id, session_id, "Simple Chat", datetime.now(), datetime.now()))
+        
+        # Store user message
+        cursor.execute('''
+            INSERT INTO chat_messages (session_id, chat_id, role, content, timestamp)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (session_id, chat_id, "user", user_input, datetime.now()))
+        
+        # Get recent context (last 10 messages)
+        cursor.execute('''
+            SELECT role, content 
+            FROM chat_messages 
+            WHERE chat_id = ? 
+            ORDER BY timestamp DESC 
+            LIMIT 10
+        ''', (chat_id,))
+        
+        messages = []
+        for row in reversed(cursor.fetchall()):
+            role, content = row
+            messages.append({"role": role, "content": content})
+
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        data = {
+            "model": "openai/gpt-3.5-turbo-0613",
+            "messages": messages,
+            "max_tokens": 2000,
+            "temperature": 0.7
+        }
+
+        res = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=30)
+        result = res.json()
+
+        if res.status_code == 200:
+            bot_response = result['choices'][0]['message']['content']
+            
+            # Store bot response
+            cursor.execute('''
+                INSERT INTO chat_messages (session_id, chat_id, role, content, timestamp)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (session_id, chat_id, "assistant", bot_response, datetime.now()))
+            
+            # Update chat session timestamp
+            cursor.execute('''
+                UPDATE chat_sessions 
+                SET updated_at = ? 
+                WHERE id = ?
+            ''', (datetime.now(), chat_id))
+            
+            conn.commit()
+            conn.close()
+            
+            return jsonify({
+                "response": bot_response,
+                "timestamp": datetime.now().isoformat()
+            })
+        else:
+            conn.close()
+            return jsonify({"error": result.get("error", "Error from OpenRouter")}), 500
+            
+    except requests.exceptions.Timeout:
+        if 'conn' in locals():
+            conn.close()
+        return jsonify({"error": "Request timeout. Please try again."}), 408
+    except Exception as e:
+        if 'conn' in locals():
+            conn.close()
+        print(f"Error in simple chat: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/health')
 def health_check():
