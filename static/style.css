@@ -349,9 +349,18 @@ header {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100%;
+    min-height: 60vh;
+    max-height: 100%;
     text-align: center;
     animation: fadeInUp 0.6s ease-out;
+    padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .welcome-section {
+        min-height: 50vh;
+        padding: 16px;
+    }
 }
 
 @keyframes fadeInUp {
@@ -559,12 +568,32 @@ header {
 /* ===== Footer / Input Area ===== */
 footer {
     flex-shrink: 0;
-    padding: 20px 24px;
+    padding: 16px 20px;
     background: var(--footer-bg);
     backdrop-filter: blur(20px);
     border-top: 1px solid var(--border-color);
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+/* Fix for mobile - prevent keyboard from hiding input */
+@media (max-width: 768px) {
+    footer {
+        padding: 12px 16px;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+    }
+    
+    /* Add padding to body so content isn't hidden behind fixed footer */
+    body {
+        padding-bottom: 80px;
+    }
 }
 
 .input-wrapper {
@@ -590,6 +619,13 @@ footer {
     transition: all 0.3s ease;
     background: var(--input-bg);
     color: var(--text-dark);
+}
+
+@media (max-width: 768px) {
+    #message {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 12px 16px;
+    }
 }
 
 #message:focus {
@@ -740,6 +776,12 @@ footer {
 
 /* ===== Responsive Design ===== */
 @media (max-width: 768px) {
+    /* Fix iOS Safari bottom bar issue */
+    #chat-widget {
+        height: 100vh;
+        height: -webkit-fill-available;
+    }
+    
     header {
         padding: 12px 16px;
     }
@@ -814,6 +856,19 @@ footer {
         width: 44px;
         height: 44px;
         font-size: 16px;
+    }
+    
+    /* Ensure input area is always accessible */
+    .input-wrapper {
+        gap: 8px;
+    }
+    
+    /* Better touch targets */
+    .header-btn {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
     }
 }
 
