@@ -33,8 +33,11 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "https://*.netlify.app",
     ]
+    CORS_ORIGIN_REGEX: str = Field(
+        default=r"https://.*\.netlify\.app",
+        alias="CORS_ORIGIN_REGEX"
+    )
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

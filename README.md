@@ -73,3 +73,24 @@ Build for production:
 ```bash
 npm run build
 ```
+
+## Production Deployment
+
+### Backend (Render Web Service)
+
+- **Service Type:** Web Service (Python or Docker)
+- **Root Directory:** `backend`
+- **Environment / Runtime:** `Python 3` (or Docker using `Dockerfile`)
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- **Health Check Path:** `/api/health`
+
+**Required Render Environment Variables:**
+- `ENVIRONMENT=production`
+- `DATABASE_URL` = Connection string to Render PostgreSQL (e.g. `postgres://...` or `postgresql://...` — automatically converted to `postgresql+asyncpg://`)
+- `OPENROUTER_API_KEY` = Secret OpenRouter API key
+- `OPENROUTER_MODEL` = `openai/gpt-4o-mini` (or desired model)
+- `FIREBASE_PROJECT_ID` = Firebase project identifier
+- `FIREBASE_CREDENTIALS_JSON` = Service account JSON string (optional if project ID suffices for public key verification)
+- `CORS_ORIGINS` = Custom domain URL(s) if applicable
+- `CORS_ORIGIN_REGEX` = `https://.*\.netlify\.app` (allows Netlify previews and production deploys)
