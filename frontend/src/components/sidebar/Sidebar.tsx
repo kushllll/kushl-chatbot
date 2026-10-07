@@ -16,6 +16,7 @@ interface SidebarProps {
   user: any;
   onSignOut: () => void;
   onSignIn?: () => void;
+  onExitGuest?: () => void;
 }
 
 export function Sidebar({
@@ -29,6 +30,7 @@ export function Sidebar({
   user,
   onSignOut,
   onSignIn,
+  onExitGuest,
 }: SidebarProps) {
   // Date grouping algorithm
   const now = new Date();
@@ -113,7 +115,16 @@ export function Sidebar({
           {conversations.length === 0 ? (
             <div className="text-center py-8 text-zinc-500 px-4">
               <MessageSquare size={24} className="mx-auto mb-2 opacity-40" />
-              <p className="text-xs text-zinc-400">No conversations yet.</p>
+              {user ? (
+                <p className="text-xs text-zinc-400">No conversations yet.</p>
+              ) : (
+                <div>
+                  <p className="text-xs text-zinc-300 font-medium">Guest Session</p>
+                  <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
+                    Temporary chat. Sign in to save conversations permanently.
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             groups
@@ -196,7 +207,7 @@ export function Sidebar({
             {onSignIn && (
               <button
                 onClick={onSignIn}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-zinc-100 hover:bg-white text-zinc-900 rounded-lg text-xs font-semibold transition-all shadow-sm"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-zinc-100 hover:bg-white text-zinc-900 rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -205,6 +216,14 @@ export function Sidebar({
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                 </svg>
                 Sign in with Google
+              </button>
+            )}
+            {onExitGuest && (
+              <button
+                onClick={onExitGuest}
+                className="w-full text-center text-[11px] text-zinc-500 hover:text-zinc-300 py-1 transition-colors cursor-pointer"
+              >
+                ← Return to Home
               </button>
             )}
           </div>
