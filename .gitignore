@@ -45,3 +45,5 @@ build/
 .env.*
 !.env.example
 .neon
+.agents/
+skills-lock.json

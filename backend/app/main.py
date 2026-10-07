@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="Backend API for Kushal Chat AI - FastAPI, PostgreSQL, Firebase Auth, OpenRouter SSE",
+    description="Backend API for Kushal Chat AI - FastAPI, PostgreSQL, Neon Auth, OpenRouter SSE",
     version="1.0.0",
     lifespan=lifespan,
 )

@@ -18,7 +18,7 @@ class User(Base):
         primary_key=True,
         default=uuid.uuid4
     )
-    firebase_uid: Mapped[str] = mapped_column(
+    auth_id: Mapped[str] = mapped_column(
         String(128),
         unique=True,
         index=True,

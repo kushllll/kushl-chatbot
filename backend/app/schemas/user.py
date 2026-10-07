@@ -11,12 +11,12 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    firebase_uid: str
+    auth_id: str
 
 
 class UserResponse(UserBase):
     id: uuid.UUID
-    firebase_uid: str
+    auth_id: str
     created_at: datetime
     updated_at: datetime
 

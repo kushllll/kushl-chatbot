@@ -25,9 +25,15 @@ class Settings(BaseSettings):
     OPENROUTER_MODEL: str = Field(default="openai/gpt-4o-mini", alias="OPENROUTER_MODEL")
     OPENROUTER_BASE_URL: str = Field(default="https://openrouter.ai/api/v1", alias="OPENROUTER_BASE_URL")
 
-    # Firebase Authentication
-    FIREBASE_PROJECT_ID: str = Field(default="", alias="FIREBASE_PROJECT_ID")
-    FIREBASE_CREDENTIALS_JSON: str = Field(default="", alias="FIREBASE_CREDENTIALS_JSON")
+    # Neon Auth
+    NEON_AUTH_JWKS_URL: str = Field(
+        default="https://ep-calm-hat-b5ikjjbs.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json",
+        alias="NEON_AUTH_JWKS_URL"
+    )
+    NEON_AUTH_BASE_URL: str = Field(
+        default="https://ep-calm-hat-b5ikjjbs.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth",
+        alias="NEON_AUTH_BASE_URL"
+    )
 
     # CORS
     CORS_ORIGINS: List[str] = [
