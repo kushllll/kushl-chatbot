@@ -75,8 +75,8 @@ export function Sidebar({
         {/* Header */}
         <div className="p-3 border-b border-zinc-800/60 flex items-center justify-between">
           <div className="flex items-center gap-2 px-2 py-1">
-            <div className="w-7 h-7 rounded-lg overflow-hidden border border-zinc-700 relative">
-              <Image src="/Neon%20Orbital%20Sphere%20Emblem.png" alt="Kushal Chat AI" width={28} height={28} className="object-cover" />
+            <div className="w-7 h-7 rounded-lg overflow-hidden border border-zinc-700 relative flex-shrink-0">
+              <Image src="/Neon%20Orbital%20Sphere%20Emblem.png" alt="" width={28} height={28} className="object-cover w-full h-full" aria-hidden="true" />
             </div>
             <span className="font-semibold text-zinc-100 text-sm tracking-tight flex items-center gap-1.5">
               Kushal Chat AI
@@ -113,16 +113,7 @@ export function Sidebar({
           {conversations.length === 0 ? (
             <div className="text-center py-8 text-zinc-500 px-4">
               <MessageSquare size={24} className="mx-auto mb-2 opacity-40" />
-              {user ? (
-                'No conversations yet.'
-              ) : (
-                <div>
-                  <p className="text-xs text-zinc-400 font-medium">Guest Mode</p>
-                  <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
-                    Chat freely below. Sign in to save chats permanently and access them anywhere.
-                  </p>
-                </div>
-              )}
+              <p className="text-xs text-zinc-400">No conversations yet.</p>
             </div>
           ) : (
             groups

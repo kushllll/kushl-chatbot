@@ -9,10 +9,22 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/Neon%20Orbital%20Sphere%20Emblem.png",
+      "src": "/icons/neon-orbital-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/neon-orbital-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/neon-orbital-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

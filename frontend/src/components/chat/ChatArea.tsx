@@ -33,8 +33,8 @@ export function ChatArea({
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-xl mx-auto">
-        <div className="w-14 h-14 rounded-2xl overflow-hidden border border-zinc-700 shadow-md mb-4">
-          <Image src="/Neon%20Orbital%20Sphere%20Emblem.png" alt="Kushal Chat AI" width={56} height={56} className="object-cover" />
+        <div className="w-14 h-14 rounded-2xl overflow-hidden border border-zinc-700 shadow-md mb-4 relative">
+          <Image src="/Neon%20Orbital%20Sphere%20Emblem.png" alt="Kushal Chat AI" width={56} height={56} className="object-cover w-full h-full" priority />
         </div>
         <h2 className="text-xl md:text-2xl font-semibold text-zinc-100 mb-2">
           What can I help with today?

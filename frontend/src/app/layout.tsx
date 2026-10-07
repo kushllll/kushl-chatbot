@@ -8,12 +8,40 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://kushalchatai.netlify.app'),
   title: 'Kushal Chat AI',
   description: 'Fast, intelligent, and responsive AI assistant',
   manifest: '/manifest.json',
   icons: {
-    icon: '/Neon%20Orbital%20Sphere%20Emblem.png',
-    apple: '/Neon%20Orbital%20Sphere%20Emblem.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/Neon%20Orbital%20Sphere%20Emblem.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/Neon%20Orbital%20Sphere%20Emblem.png' },
+    ],
+  },
+  openGraph: {
+    title: 'Kushal Chat AI',
+    description: 'Fast, intelligent, and responsive AI assistant',
+    url: 'https://kushalchatai.netlify.app',
+    siteName: 'Kushal Chat AI',
+    images: [
+      {
+        url: '/Neon%20Orbital%20Sphere%20Emblem.png',
+        width: 877,
+        height: 877,
+        alt: 'Kushal Chat AI',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Kushal Chat AI',
+    description: 'Fast, intelligent, and responsive AI assistant',
+    images: ['/Neon%20Orbital%20Sphere%20Emblem.png'],
   },
   appleWebApp: {
     capable: true,
