@@ -2,8 +2,7 @@ const CACHE_NAME = 'kushal-chat-ai-v1';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/favicon.png',
-  '/pp.png',
+  '/Neon%20Orbital%20Sphere%20Emblem.png',
 ];
 
 self.addEventListener('install', (event) => {

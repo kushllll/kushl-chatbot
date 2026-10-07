@@ -25,3 +25,10 @@ export interface Conversation {
 export interface ConversationDetail extends Conversation {
   messages: Message[];
 }
+
+export interface ChatModel {
+  id: string;
+  name: string;
+  tagline?: string;
+  description: string;
+}

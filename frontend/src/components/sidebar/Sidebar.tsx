@@ -15,6 +15,7 @@ interface SidebarProps {
   onClose: () => void;
   user: any;
   onSignOut: () => void;
+  onSignIn?: () => void;
 }
 
 export function Sidebar({
@@ -27,6 +28,7 @@ export function Sidebar({
   onClose,
   user,
   onSignOut,
+  onSignIn,
 }: SidebarProps) {
   // Date grouping algorithm
   const now = new Date();
@@ -74,7 +76,7 @@ export function Sidebar({
         <div className="p-3 border-b border-zinc-800/60 flex items-center justify-between">
           <div className="flex items-center gap-2 px-2 py-1">
             <div className="w-7 h-7 rounded-lg overflow-hidden border border-zinc-700 relative">
-              <Image src="/pp.png" alt="Kushal Chat AI" width={28} height={28} className="object-cover" />
+              <Image src="/Neon%20Orbital%20Sphere%20Emblem.png" alt="Kushal Chat AI" width={28} height={28} className="object-cover" />
             </div>
             <span className="font-semibold text-zinc-100 text-sm tracking-tight flex items-center gap-1.5">
               Kushal Chat AI
@@ -111,7 +113,16 @@ export function Sidebar({
           {conversations.length === 0 ? (
             <div className="text-center py-8 text-zinc-500 px-4">
               <MessageSquare size={24} className="mx-auto mb-2 opacity-40" />
-              No conversations yet.
+              {user ? (
+                'No conversations yet.'
+              ) : (
+                <div>
+                  <p className="text-xs text-zinc-400 font-medium">Guest Mode</p>
+                  <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
+                    Chat freely below. Sign in to save chats permanently and access them anywhere.
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             groups
@@ -157,8 +168,8 @@ export function Sidebar({
           )}
         </div>
 
-        {/* User Footer */}
-        {user && (
+        {/* Footer: User profile or Guest sign-in CTA */}
+        {user ? (
           <div className="p-3 border-t border-zinc-800/80 bg-zinc-950 flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0 pr-2">
               <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-medium text-zinc-300 overflow-hidden flex-shrink-0 border border-zinc-700">
@@ -185,6 +196,26 @@ export function Sidebar({
             >
               <LogOut size={16} />
             </button>
+          </div>
+        ) : (
+          <div className="p-3 border-t border-zinc-800/80 bg-zinc-950/60 flex flex-col gap-2">
+            <div className="text-[11px] text-zinc-400 leading-tight">
+              Sign in to save chat history & sync devices.
+            </div>
+            {onSignIn && (
+              <button
+                onClick={onSignIn}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-zinc-100 hover:bg-white text-zinc-900 rounded-lg text-xs font-semibold transition-all shadow-sm"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                Sign in with Google
+              </button>
+            )}
           </div>
         )}
       </aside>

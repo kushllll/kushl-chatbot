@@ -55,24 +55,26 @@ export function useAuth(): AuthState {
           }
         }
       } else if (!isPending) {
-        // Fallback for local development testing
-        const storedDevToken =
-          typeof window !== 'undefined'
-            ? localStorage.getItem('kushal_dev_token')
-            : null;
+        // Fallback only for local development testing
+        if (process.env.NODE_ENV === 'development') {
+          const storedDevToken =
+            typeof window !== 'undefined'
+              ? localStorage.getItem('kushal_dev_token')
+              : null;
 
-        if (storedDevToken) {
-          setToken(storedDevToken);
-          setUser({
-            uid: 'dev_user',
-            email: 'developer@kushalchat.ai',
-            displayName: 'Kushal Dev',
-            photoURL: '/pp.png',
-          });
-        } else {
-          setUser(null);
-          setToken(null);
+          if (storedDevToken) {
+            setToken(storedDevToken);
+            setUser({
+              uid: 'dev_user',
+              email: 'developer@kushalchat.ai',
+              displayName: 'Kushal Dev',
+              photoURL: '/Neon%20Orbital%20Sphere%20Emblem.png',
+            });
+            return;
+          }
         }
+        setUser(null);
+        setToken(null);
       }
     }
 
@@ -93,18 +95,23 @@ export function useAuth(): AuthState {
         throw new Error(res.error.message || 'Neon Auth Google sign-in failed');
       }
     } catch (err) {
-      console.warn('Neon Auth sign-in failed, falling back to local dev session:', err);
-      const mockToken = 'mock-test-token:dev_user:developer@kushalchat.ai';
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('kushal_dev_token', mockToken);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Neon Auth sign-in failed, falling back to local dev session:', err);
+        const mockToken = 'mock-test-token:dev_user:developer@kushalchat.ai';
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('kushal_dev_token', mockToken);
+        }
+        setToken(mockToken);
+        setUser({
+          uid: 'dev_user',
+          email: 'developer@kushalchat.ai',
+          displayName: 'Kushal Dev',
+          photoURL: '/Neon%20Orbital%20Sphere%20Emblem.png',
+        });
+      } else {
+        console.error('Neon Auth Google sign-in failed:', err);
+        throw err;
       }
-      setToken(mockToken);
-      setUser({
-        uid: 'dev_user',
-        email: 'developer@kushalchat.ai',
-        displayName: 'Kushal Dev',
-        photoURL: '/pp.png',
-      });
     }
   };
 

@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   description: 'Fast, intelligent, and responsive AI assistant',
   manifest: '/manifest.json',
   icons: {
-    icon: '/favicon.png',
-    apple: '/pp.png',
+    icon: '/Neon%20Orbital%20Sphere%20Emblem.png',
+    apple: '/Neon%20Orbital%20Sphere%20Emblem.png',
   },
   appleWebApp: {
     capable: true,

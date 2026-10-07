@@ -1,23 +1,132 @@
 import json
 import logging
+import time
+from collections import defaultdict
 from datetime import datetime, timezone
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Dict, List
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
+from app.core.config import DEFAULT_MODEL, FREE_MODELS, validate_and_resolve_model
 from app.core.database import get_db
 from app.models.conversation import Conversation
 from app.models.message import Message
 from app.models.user import User
-from app.schemas.chat import ChatRequest
+from app.schemas.chat import ChatRequest, GuestChatRequest
 from app.services.openrouter import openrouter_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
+
+# In-memory sliding window rate limiter for unauthenticated guest requests:
+# Limit: 20 requests per 60 seconds per IP
+GUEST_RATE_LIMIT = 20
+GUEST_WINDOW_SECONDS = 60
+_guest_request_timestamps: Dict[str, List[float]] = defaultdict(list)
+
+
+def check_guest_rate_limit(request: Request) -> str:
+    """
+    Enforces in-memory IP sliding-window rate limit for guest chat.
+    Does not touch PostgreSQL or require persistent storage.
+    """
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+    elif request.client and request.client.host:
+        client_ip = request.client.host
+    else:
+        client_ip = "unknown"
+
+    now = time.time()
+    cutoff = now - GUEST_WINDOW_SECONDS
+    timestamps = [t for t in _guest_request_timestamps[client_ip] if t > cutoff]
+
+    if len(timestamps) >= GUEST_RATE_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Guest rate limit exceeded (20 messages/minute). Please sign in for unlimited messages."
+        )
+
+    timestamps.append(now)
+    _guest_request_timestamps[client_ip] = timestamps
+    return client_ip
+
+
+@router.get("/models")
+async def get_models():
+    """
+    Returns verified free OpenRouter models available for chat completions.
+    """
+    return {
+        "models": FREE_MODELS,
+        "default": DEFAULT_MODEL,
+    }
+
+
+@router.post("/guest")
+async def send_guest_chat_message(
+    payload: GuestChatRequest,
+    request: Request,
+):
+    """
+    Temporary, unauthenticated guest chat endpoint.
+    - Rate limited in-memory per IP (20 msgs/min).
+    - Ephemeral SSE streaming.
+    - Zero persistence in PostgreSQL (does not create users, conversations, or messages).
+    """
+    check_guest_rate_limit(request)
+
+    clean_message = payload.message.strip()
+    if not clean_message:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Message content cannot be empty"
+        )
+
+    try:
+        resolved_model = validate_and_resolve_model(payload.model)
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(err)
+        )
+
+    # Build ephemeral context from optional guest history (up to last 10 messages)
+    formatted_context: List[Dict[str, str]] = []
+    if payload.history:
+        recent_history = payload.history[-10:]
+        for h in recent_history:
+            formatted_context.append({"role": h.role, "content": h.content})
+
+    formatted_context.append({"role": "user", "content": clean_message})
+
+    async def sse_guest_stream():
+        try:
+            async for token in openrouter_service.stream_chat_completion(
+                formatted_context,
+                model=resolved_model
+            ):
+                yield f"data: {json.dumps({'chunk': token})}\n\n"
+
+            yield f"data: {json.dumps({'done': True, 'guest': True})}\n\n"
+        except Exception as exc:
+            logger.error("Error during guest streaming completion: %s", exc)
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+    return StreamingResponse(
+        sse_guest_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
+    )
 
 
 @router.post("")
@@ -35,6 +144,14 @@ async def send_chat_message(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Message content cannot be empty"
+        )
+
+    try:
+        resolved_model = validate_and_resolve_model(payload.model)
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(err)
         )
 
     # 1. Resolve or create conversation
@@ -96,7 +213,10 @@ async def send_chat_message(
     async def sse_event_stream():
         collected_response: List[str] = []
         try:
-            async for token in openrouter_service.stream_chat_completion(formatted_context):
+            async for token in openrouter_service.stream_chat_completion(
+                formatted_context,
+                model=resolved_model
+            ):
                 collected_response.append(token)
                 yield f"data: {json.dumps({'chunk': token})}\n\n"
 

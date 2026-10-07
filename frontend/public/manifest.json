@@ -9,18 +9,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/favicon-32x32.png",
-      "sizes": "32x32",
-      "type": "image/png"
-    },
-    {
-      "src": "/favicon.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/pp.png",
+      "src": "/Neon%20Orbital%20Sphere%20Emblem.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

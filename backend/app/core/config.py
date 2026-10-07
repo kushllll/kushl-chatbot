@@ -56,3 +56,59 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Verified Free OpenRouter Models
+FREE_MODELS = [
+    {
+        "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "name": "NVIDIA Nemotron 3 Ultra",
+        "tagline": "Complex reasoning",
+        "description": "Difficult questions, planning, deep analysis, advanced coding",
+    },
+    {
+        "id": "nvidia/nemotron-3.5-lightning:free",
+        "name": "NVIDIA Nemotron 3.5 Lightning",
+        "tagline": "Fast everyday answers",
+        "description": "Quick questions, explanations, brainstorming, simple coding",
+    },
+    {
+        "id": "google/gemma-4-31b-it:free",
+        "name": "Google Gemma 4 31B",
+        "tagline": "General + multimodal",
+        "description": "General chat, coding, reasoning, supported image/document tasks",
+    },
+    {
+        "id": "thinkingmachines/inkling-small:free",
+        "name": "Thinking Machines Inkling Small",
+        "tagline": "Coding + reasoning",
+        "description": "Programming, debugging, technical questions, structured reasoning",
+    },
+]
+
+MODEL_ALIASES = {
+    "google/gemma-4-31b:free": "google/gemma-4-31b-it:free",
+    "thinkingmachines/inkling:free": "thinkingmachines/inkling-small:free",
+}
+
+# Set of allowed model IDs
+ALLOWED_MODELS = {m["id"] for m in FREE_MODELS} | set(MODEL_ALIASES.keys())
+if settings.OPENROUTER_MODEL:
+    ALLOWED_MODELS.add(settings.OPENROUTER_MODEL)
+
+DEFAULT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
+
+
+def validate_and_resolve_model(model_name: str | None) -> str:
+    """
+    Validates the requested model against the allowed model list and resolves any known aliases.
+    Raises ValueError if the model is not permitted.
+    """
+    if not model_name or not model_name.strip():
+        return DEFAULT_MODEL
+
+    cleaned = model_name.strip()
+    if cleaned not in ALLOWED_MODELS:
+        raise ValueError(f"Model '{cleaned}' is not supported. Choose from available free models.")
+
+    # Resolve alias if present
+    return MODEL_ALIASES.get(cleaned, cleaned)

@@ -1,17 +1,46 @@
-import { Conversation, ConversationDetail } from '@/types';
+import { Conversation, ConversationDetail, ChatModel } from '@/types';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
+/**
+ * Normalizes backend API base URL.
+ * Guarantees a clean, single '/api' suffix regardless of whether NEXT_PUBLIC_API_URL
+ * has trailing slashes or already includes '/api'.
+ */
+export function getApiBaseUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (raw) {
+    const clean = raw.replace(/\/+$/, '');
+    return clean.endsWith('/api') ? clean : `${clean}/api`;
+  }
+  // In production builds, default to the live Render backend API
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://kushl-chatbot.onrender.com/api';
+  }
+  // Local development default
+  return 'http://127.0.0.1:8000/api';
+}
 
-function getHeaders(token: string): HeadersInit {
-  return {
+function getHeaders(token?: string | null): HeadersInit {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
   };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+export async function fetchModels(): Promise<{ models: ChatModel[]; default: string }> {
+  const baseUrl = getApiBaseUrl();
+  const res = await fetch(`${baseUrl}/chat/models`);
+  if (!res.ok) {
+    throw new Error(`Failed to load models (${res.status})`);
+  }
+  return res.json();
 }
 
 export async function fetchConversations(token: string): Promise<Conversation[]> {
-  const res = await fetch(`${API_BASE_URL}/conversations`, {
+  const baseUrl = getApiBaseUrl();
+  const res = await fetch(`${baseUrl}/conversations`, {
     headers: getHeaders(token),
   });
   if (!res.ok) {
@@ -24,7 +53,8 @@ export async function fetchConversation(
   id: string,
   token: string
 ): Promise<ConversationDetail> {
-  const res = await fetch(`${API_BASE_URL}/conversations/${id}`, {
+  const baseUrl = getApiBaseUrl();
+  const res = await fetch(`${baseUrl}/conversations/${id}`, {
     headers: getHeaders(token),
   });
   if (!res.ok) {
@@ -37,7 +67,8 @@ export async function createConversation(
   title: string,
   token: string
 ): Promise<Conversation> {
-  const res = await fetch(`${API_BASE_URL}/conversations`, {
+  const baseUrl = getApiBaseUrl();
+  const res = await fetch(`${baseUrl}/conversations`, {
     method: 'POST',
     headers: getHeaders(token),
     body: JSON.stringify({ title }),
@@ -52,7 +83,8 @@ export async function deleteConversation(
   id: string,
   token: string
 ): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/conversations/${id}`, {
+  const baseUrl = getApiBaseUrl();
+  const res = await fetch(`${baseUrl}/conversations/${id}`, {
     method: 'DELETE',
     headers: getHeaders(token),
   });
@@ -65,25 +97,45 @@ export async function streamChatMessage({
   message,
   conversationId,
   token,
+  model,
+  history,
+  signal,
   onChunk,
   onDone,
   onError,
 }: {
   message: string;
   conversationId?: string | null;
-  token: string;
+  token?: string | null;
+  model?: string;
+  history?: { role: 'user' | 'assistant'; content: string }[];
+  signal?: AbortSignal;
   onChunk: (chunk: string) => void;
-  onDone: (data: { conversation_id: string; message_id: string }) => void;
+  onDone: (data: { conversation_id?: string; message_id?: string; guest?: boolean }) => void;
   onError: (error: string) => void;
 }): Promise<void> {
   try {
-    const res = await fetch(`${API_BASE_URL}/chat`, {
+    const baseUrl = getApiBaseUrl();
+    const isGuest = !token;
+    const url = isGuest ? `${baseUrl}/chat/guest` : `${baseUrl}/chat`;
+
+    const bodyPayload = isGuest
+      ? {
+          message,
+          model: model || undefined,
+          history: history && history.length > 0 ? history : undefined,
+        }
+      : {
+          message,
+          conversation_id: conversationId || undefined,
+          model: model || undefined,
+        };
+
+    const res = await fetch(url, {
       method: 'POST',
       headers: getHeaders(token),
-      body: JSON.stringify({
-        message,
-        conversation_id: conversationId || undefined,
-      }),
+      body: JSON.stringify(bodyPayload),
+      signal,
     });
 
     if (!res.ok) {
@@ -119,6 +171,7 @@ export async function streamChatMessage({
               onDone({
                 conversation_id: data.conversation_id,
                 message_id: data.message_id,
+                guest: data.guest,
               });
             }
             if (data.error) {
@@ -131,6 +184,10 @@ export async function streamChatMessage({
       }
     }
   } catch (err: any) {
+    if (err.name === 'AbortError') {
+      // User deliberately aborted stream
+      return;
+    }
     onError(err.message || 'Network error communicating with AI server');
   }
 }

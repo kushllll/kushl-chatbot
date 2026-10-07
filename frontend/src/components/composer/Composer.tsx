@@ -1,18 +1,60 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Mic, MicOff, Square } from 'lucide-react';
+import { ArrowUp, Cpu, Mic, MicOff, Square } from 'lucide-react';
 import { useVoice } from '@/hooks/useVoice';
+import { ChatModel } from '@/types';
+
+const FALLBACK_MODELS: ChatModel[] = [
+  {
+    id: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+    name: 'NVIDIA Nemotron 3 Ultra',
+    tagline: 'Complex reasoning',
+    description: 'Difficult questions, planning, deep analysis, advanced coding',
+  },
+  {
+    id: 'nvidia/nemotron-3.5-lightning:free',
+    name: 'NVIDIA Nemotron 3.5 Lightning',
+    tagline: 'Fast everyday answers',
+    description: 'Quick questions, explanations, brainstorming, simple coding',
+  },
+  {
+    id: 'google/gemma-4-31b-it:free',
+    name: 'Google Gemma 4 31B',
+    tagline: 'General + multimodal',
+    description: 'General chat, coding, reasoning, supported image/document tasks',
+  },
+  {
+    id: 'thinkingmachines/inkling-small:free',
+    name: 'Thinking Machines Inkling Small',
+    tagline: 'Coding + reasoning',
+    description: 'Programming, debugging, technical questions, structured reasoning',
+  },
+];
 
 interface ComposerProps {
   onSendMessage: (text: string) => void;
   isLoading: boolean;
   onCancel?: () => void;
+  models?: ChatModel[];
+  selectedModel?: string;
+  onSelectModel?: (modelId: string) => void;
 }
 
-export function Composer({ onSendMessage, isLoading, onCancel }: ComposerProps) {
+export function Composer({
+  onSendMessage,
+  isLoading,
+  onCancel,
+  models = FALLBACK_MODELS,
+  selectedModel,
+  onSelectModel,
+}: ComposerProps) {
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const activeModelList = models && models.length > 0 ? models : FALLBACK_MODELS;
+  const currentModelId = selectedModel || activeModelList[0]?.id;
+
 
   const {
     isListening,
@@ -74,6 +116,29 @@ export function Composer({ onSendMessage, isLoading, onCancel }: ComposerProps) 
           <span>{voiceError}</span>
         </div>
       )}
+
+      {/* Model Selector Bar */}
+      <div className="flex items-center justify-between px-2 mb-2">
+        <div className="flex items-center gap-1.5">
+          <Cpu size={13} className="text-zinc-500" />
+          <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+            Model
+          </span>
+          <select
+            value={currentModelId}
+            onChange={(e) => onSelectModel?.(e.target.value)}
+            disabled={isLoading}
+            className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs rounded-lg px-2 py-0.5 focus:outline-none focus:border-zinc-600 transition-colors cursor-pointer"
+            title={activeModelList.find((m) => m.id === currentModelId)?.description || 'Select AI Model'}
+          >
+            {activeModelList.map((m) => (
+              <option key={m.id} value={m.id} className="bg-zinc-900 text-zinc-200">
+                {m.name}{m.tagline ? ` (${m.tagline})` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <form
         onSubmit={handleSubmit}

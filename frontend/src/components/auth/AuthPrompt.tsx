@@ -12,7 +12,7 @@ export function AuthPrompt({ onSignIn, isLoading }: AuthPromptProps) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-sm mx-auto">
       <div className="w-16 h-16 rounded-2xl overflow-hidden border border-zinc-700 shadow-lg mb-6">
-        <Image src="/pp.png" alt="Kushal Chat AI" width={64} height={64} className="object-cover" />
+        <Image src="/Neon%20Orbital%20Sphere%20Emblem.png" alt="Kushal Chat AI" width={64} height={64} className="object-cover" />
       </div>
       <h1 className="text-2xl font-bold text-zinc-100 mb-2">Kushal Chat AI</h1>
       <p className="text-sm text-zinc-400 mb-6 leading-relaxed">
